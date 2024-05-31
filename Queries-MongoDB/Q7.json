@@ -1,0 +1,76 @@
+[
+  {
+    $group: {
+      _id: "$Title",
+      number_of_anonymous_reviews: {
+        $sum: {
+          $cond: [
+            {
+              $eq: ["$profileName", "Unknown"]
+            },
+            1,
+            0
+          ]
+        }
+      },
+      average_rating_for_anonymous_reviews: {
+        $avg: {
+          $cond: [
+            {
+              $eq: ["$profileName", "Unknown"]
+            },
+            "$review/score",
+            null
+          ]
+        }
+      },
+      average_score: {
+        $avg: "$review/score"
+      }
+    }
+  },
+  {
+    $addFields: {
+      average_sentiment_for_book: {
+        $switch: {
+          branches: [
+            {
+              case: {
+                $gte: ["$average_score", 4]
+              },
+              then: "Positive"
+            },
+            {
+              case: {
+                $lt: ["$average_score", 2]
+              },
+              then: "Negative"
+            }
+          ],
+          default: "Mixed"
+        }
+      }
+    }
+  },
+  {
+    $match: {
+      number_of_anonymous_reviews: {
+        $gt: 5
+      }
+    }
+  },
+  {
+    $sort: {
+      number_of_anonymous_reviews: -1
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      title: "$_id",
+      number_of_anonymous_reviews: 1,
+      average_rating_for_anonymous_reviews: 1,
+      average_sentiment_for_book: 1
+    }
+  }
+]

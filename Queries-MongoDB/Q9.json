@@ -1,0 +1,104 @@
+[
+  {
+    $match: {
+      "review/score": {
+        $gt: 4
+      },
+      Title: {
+        $regex: "^The"
+      }
+    }
+  },
+  {
+    $project: {
+      month: {
+        $month: {
+          $dateFromString: {
+            dateString: "$Date",
+            format: "%Y-%m-%d"
+          }
+        }
+      }
+    }
+  },
+  {
+    $facet: {
+      num_books_above_4_first_quarter: [
+        {
+          $match: {
+            month: {
+              $in: [1, 2, 3]
+            }
+          }
+        },
+        {
+          $count: "count"
+        }
+      ],
+      num_books_above_4_second_quarter: [
+        {
+          $match: {
+            month: {
+              $in: [4, 5, 6]
+            }
+          }
+        },
+        {
+          $count: "count"
+        }
+      ],
+      num_books_above_4_third_quarter: [
+        {
+          $match: {
+            month: {
+              $in: [7, 8, 9]
+            }
+          }
+        },
+        {
+          $count: "count"
+        }
+      ],
+      num_books_above_4_fourth_quarter: [
+        {
+          $match: {
+            month: {
+              $in: [10, 11, 12]
+            }
+          }
+        },
+        {
+          $count: "count"
+        }
+      ]
+    }
+  },
+  {
+    $project: {
+      num_books_above_4_first_quarter: {
+        $arrayElemAt: [
+          "$num_books_above_4_first_quarter.count",
+          0
+        ]
+      },
+      num_books_above_4_second_quarter: {
+        $arrayElemAt: [
+          "$num_books_above_4_second_quarter.count",
+          0
+        ]
+      },
+      num_books_above_4_third_quarter: {
+        $arrayElemAt: [
+          "$num_books_above_4_third_quarter.count",
+          0
+        ]
+      },
+      num_books_above_4_fourth_quarter: {
+        $arrayElemAt: [
+          "$num_books_above_4_fourth_quarter.count",
+          0
+        ]
+      }
+    }
+  }
+]

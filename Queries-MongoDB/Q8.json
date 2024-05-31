@@ -1,0 +1,87 @@
+[
+  {
+    $group: {
+      _id: "$Title",
+      latest_review_time: {
+        $max: "$review/time"
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "books_ratings",
+      let: {
+        title: "$_id",
+        latest_time: "$latest_review_time"
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $eq: ["$Title", "$$title"]
+                },
+                {
+                  $eq: [
+                    "$review/time",
+                    "$$latest_time"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      as: "latest_reviews"
+    }
+  },
+  {
+    $unwind: "$latest_reviews"
+  },
+  {
+    $group: {
+      _id: {
+        title: "$latest_reviews.Title",
+        price: "$latest_reviews.Price",
+        profile_name:
+          "$latest_reviews.profileName"
+      },
+      average_rating: {
+        $avg: "$latest_reviews.review/score"
+      },
+      number_of_reviews: {
+        $sum: 1
+      },
+      reviews: {
+        $push: "$latest_reviews"
+      }
+    }
+  },
+  {
+    $match: {
+      number_of_reviews: {
+        $gt: 3
+      }
+    }
+  },
+  {
+    $sort: {
+      average_rating: -1,
+      number_of_reviews: -1
+    }
+  },
+  {
+    $limit: 10
+  },
+  {
+    $project: {
+      _id: 0,
+      title: "$_id.title",
+      price: "$_id.price",
+      reviewer_name: "$_id.profile_name",
+      average_rating: 1,
+      number_of_reviews: 1
+    }
+  }
+]

@@ -1,0 +1,57 @@
+
+[
+  {
+    $match: {
+      $and: [
+        {
+          Title: {
+            $exists: true,
+            $ne: ""
+          }
+        },
+        {
+          Price: {
+            $ne: 0
+          }
+        },
+        {
+          $expr: {
+            $lt: [
+              {
+                $subtract: [
+                  {
+                    $strLenCP: "$Title"
+                  },
+                  {
+                    $strLenCP: {
+                      $replaceAll: {
+                        input: "$Title",
+                        find: " ",
+                        replacement: ""
+                      }
+                    }
+                  }
+                ]
+              },
+              5
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    $group: {
+      _id: "$Title",
+      // Group by title
+      price: {
+        $first: "$Price"
+      }
+    }
+  },
+  {
+    $sort: {
+      price: -1
+    }
+  }
+]

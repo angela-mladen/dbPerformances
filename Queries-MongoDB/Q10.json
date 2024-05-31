@@ -1,0 +1,48 @@
+[
+  {
+    $addFields: {
+      date_rating_date: {
+        $dateFromString: {
+          dateString: "$Date",
+          format: "%Y-%m-%d"
+        }
+      },
+      word_count: {
+        $size: {
+          $split: ["$review/text", " "]
+        }
+      }
+    }
+  },
+  {
+    $match: {
+      date_rating_date: {
+        $gte: {
+          $dateSubtract: {
+            startDate: "$$NOW",
+            unit: "year",
+            amount: 2
+          }
+        },
+        $lte: "$$NOW"
+      },
+      word_count: {
+        $gt: 60
+      }
+    }
+  },
+  {
+    $sort: {
+      date_rating_date: 1
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      title: "$Title",
+      price: "$Price",
+      review_text: "$review/text",
+      date_rating: "$Date"
+    }
+  }
+]

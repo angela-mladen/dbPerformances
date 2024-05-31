@@ -1,0 +1,30 @@
+[
+  {
+    $match:
+      {
+        "review/score": 5,
+        "review/text": {
+          $exists: true,
+          $type: "string",
+          $gt: 5
+        },
+        "review/summary": {
+          $exists: true,
+          $type: "string",
+          $gt: 3
+        },
+        profileName: {
+          $not: {
+            $regex: /Unknown/
+          }
+        }
+      }
+  },
+  {
+    $project:
+      {
+        _id: 0,
+        Title: 1
+      }
+  }
+]

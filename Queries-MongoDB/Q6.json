@@ -1,0 +1,76 @@
+[
+  {
+    $group: {
+      _id: "$Title",
+      average_score: {
+        $avg: "$review/score"
+      },
+      total_reviews: {
+        $count: {}
+      },
+      most_recent_review_time: {
+        $max: "$review/time"
+      }
+    }
+  },
+  {
+    $sort: {
+      average_score: -1
+    }
+  },
+  {
+    $limit: 5
+  },
+  {
+    $lookup: {
+      from: "books_ratings",
+      let: {
+        title: "$_id",
+        most_recent_time:
+          "$most_recent_review_time"
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $eq: ["$Title", "$$title"]
+                },
+                {
+                  $eq: [
+                    "$review/time",
+                    "$$most_recent_time"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            review_summary: "$review/summary",
+            review_text: "$review/text"
+          }
+        }
+      ],
+      as: "recent_review"
+    }
+  },
+  {
+    $unwind: "$recent_review"
+  },
+  {
+    $project: {
+      _id: 0,
+      title: "$_id",
+      average_score: 1,
+      total_reviews: 1,
+      most_recent_review_time: 1,
+      review_summary:
+        "$recent_review.review_summary",
+      review_text: "$recent_review.review_text"
+    }
+  }
+]

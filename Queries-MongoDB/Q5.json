@@ -1,0 +1,86 @@
+[
+  {
+    $addFields: {
+      helpfulness_numerator: {
+        $toDouble: {
+          $arrayElemAt: [
+            {
+              $split: ["$review/helpfulness", "/"]
+            },
+            0
+          ]
+        }
+      },
+      helpfulness_denominator: {
+        $toDouble: {
+          $arrayElemAt: [
+            {
+              $split: ["$review/helpfulness", "/"]
+            },
+            1
+          ]
+        }
+      }
+    }
+  },
+  {
+    $addFields: {
+      helpfulness_ratio: {
+        $cond: {
+          if: {
+            $eq: ["$helpfulness_denominator", 0]
+          },
+          then: 0,
+          else: {
+            $divide: [
+              "$helpfulness_numerator",
+              "$helpfulness_denominator"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    $match: {
+      helpfulness_ratio: {
+        $gt: 0.5
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        user_id: "$User_id",
+        profile_name: "$profileName"
+      },
+      total_reviews: {
+        $count: {}
+      },
+      average_score: {
+        $avg: "$review/score"
+      }
+    }
+  },
+  {
+    $match: {
+      total_reviews: {
+        $gte: 5
+      }
+    }
+  },
+  {
+    $sort: {
+      average_score: -1
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      user_id: "$_id.user_id",
+      profile_name: "$_id.profile_name",
+      total_reviews: 1,
+      average_score: 1
+    }
+  }
+]

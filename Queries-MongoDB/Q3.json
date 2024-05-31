@@ -1,0 +1,36 @@
+[
+  {
+    $match:
+      {
+        Price: {
+          $gte: 2,
+          $lte: 4
+        },
+        "review/score": {
+          $gte: 1,
+          $lte: 3
+        },
+        Date: {
+          $regex: /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/
+        },
+        $nor: [
+          {
+            profile_name: "Unknown"
+          },
+          {
+            profile_name: {
+              $regex: /\.com$/
+            }
+          }
+        ]
+      }
+  },
+  {
+    $project:
+      {
+        _id: 0,
+        Date: 1,
+        profileName: 1
+      }
+  }
+]

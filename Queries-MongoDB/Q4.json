@@ -1,0 +1,66 @@
+[
+  {
+    $match: {
+      profileName: {
+        $not: {
+          $regex: /Unknown/
+        }
+      },
+      "review/score": {
+        $gt: 3
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$profileName",
+      total_reviews: {
+        $sum: 1
+      },
+      good_reviews: {
+        $sum: {
+          $cond: [
+            {
+              $or: [
+                {
+                  $regexMatch: {
+                    input: "$review/summary",
+                    regex:
+                      /excellent|good|great|awesome|would recommend/i
+                  }
+                }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      },
+      bad_reviews: {
+        $sum: {
+          $cond: [
+            {
+              $or: [
+                {
+                  $regexMatch: {
+                    input: "$review/summary",
+                    regex:
+                      /did not enjoy|did not like|boring|would not recommend|too bad(?! not)/i
+                  }
+                }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      }
+    }
+  },
+  {
+    $sort:
+      {
+        total_reviews: -1
+      }
+  }
+]
